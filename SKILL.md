@@ -14,6 +14,17 @@ description: 制作、校验、整理和上传 Open Bench 数据集产物，覆�
 - 已知排障经验：读 `references/TroubleShooting.md`。
 - 样本互斥校验：运行 `python3 scripts/validate_sf_jsonl.py <sf.jsonl路径>`。
 
+字段来源优先级：
+
+- 上传版 `df.jsonl` 以 `ds-cli` 外部手册、`ds-cli -h` 和服务端 schema 校验结果为准。
+- `references/specs_20260325/` 是测试标签规范摘要，不等同于 `df.jsonl` 可上传字段白名单。
+- 如果服务端报“存在非法字段”，必须删除该字段或迁移到允许的结构里，不要为了满足标签规范继续保留。
+- `data_generate_time` 不要写入上传版 `df.jsonl`，除非当前 CLI/schema 明确接受。
+- `source_info` 在上传版 `df.jsonl` 中是字符串，不要写成对象。
+- 顶层 `tag` 不要默认写入上传版 `df.jsonl`。即使字段说明写为可选，若当前训练/测试 schema 报非法字段，必须省略；只有服务端明确接受时才可写入 `list<string>`。
+- `audio.audio_format` 不在当前公开上传 schema 中，不要默认写入。
+- 当前训练数据集创建会要求顶层 `license` 为必填字符串。公开数据优先填写上游许可证；没有可靠依据时先问用户，不要留空或臆造。
+
 开源安全约束：
 
 - 不要把真实数据库账号、API key、Cookie、token、内网 IP、个人主目录或机器专用绝对路径写回仓库。
@@ -75,19 +86,22 @@ description: 制作、校验、整理和上传 Open Bench 数据集产物，覆�
 
 - `source` 是顶层字段，不写到 `audio.source`。
 - `df.json` 中拿不准的业务字段必须问人，不要猜。
-- 高风险字段包括 `application_domain`、`category`、`product_info.brand`、`project_name`、`environment`、`data_generate_time`、`data_user`、`tag`、`source`、`audio.audio_format`、`audio.speech.dialect`。
+- 高风险字段包括 `application_domain`、`category`、`product_info.brand`、`project_name`、`environment`、`data_user`、`source`、`source_info`、`tag`、`audio.speech.dialect`。
 - `source` 不能笼统写旧口径的“质量测试数据”；应按事实区分 `自主采集`、`生成`、`badcase数据`、`公开数据`、业务回流等。
 - 反例/误唤醒测试集的 `test_content` 默认用 `误唤醒`；正例测试集根据任务语义和用户确认选择 `主观正例` 或 `客观正例`。
-- 顶层 `tag` 是当前测试集任务标签字段；不要再写旧字段 `ds_task_tag`。
+- 顶层 `tag` 不要默认写入上传版 `df.jsonl`；若服务端明确接受，必须写成 `list<string>`，不要写成字符串，也不要再写旧字段 `ds_task_tag`。
 - 若没有有效内容，删除空的 `sample_info`、`spatial_info`、`speaker`、`custom` 等壳对象。
 
 ### 样本规则
 
-- `sample_id` 默认用音频文件名去掉扩展名；只有确认会与历史样本冲突时，才加可追溯前缀。
+- 若输入 manifest 已有唯一 `key`、`utt_id` 或等价样本 ID，优先用它作为 `sample_id`。
+- 只有没有现成样本 ID 时，才默认用音频文件名去掉扩展名；长音频切片或多条样本共用同一音频时，不能用音频 basename 当 `sample_id`。
 - `parent_sample_id` 默认不填。只有数据明确从其它样本仿真、派生或继承，并且用户要求保留血缘时才填写。
 - 不要默认输入一定是 `use.wavlist + text`；先确认文件清单和列含义。
 - 如果原始清单记录旧机器绝对路径但当前目录有同名音频，优先回退到本地同名文件。
-- `attribute.path` 应指向当前可访问路径；开源示例中使用相对路径。
+- `attribute.path` 应指向当前可访问路径；上传本地数据时通常写绝对路径，开源示例中使用相对路径。
+- `annotation[].transcription.text` 必须写成字符串数组，例如 `["文本"]`，不要写成裸字符串。
+- 可追溯但非标准字段放入 `annotation[].custom`；历史机器绝对路径不要原样写入 custom，优先保留相对来源路径、原始 key、dataset、split、duration 等。
 
 ### 互斥校验
 
@@ -123,6 +137,7 @@ description: 制作、校验、整理和上传 Open Bench 数据集产物，覆�
 ### 高频规则
 
 - 训练集数据来源字段是顶层 `source`。
+- 训练集上传版 `df.jsonl` 必须包含非空字符串 `license`；公开数据按上游许可证填写。
 - `transcription.text`、`pronunciation`、`domain`、`confidence` 等优先按数组字段组织。
 - 原始输入没有拼音列时，不补 `pronunciation` 或 `pronunciation_unsigned`。
 - 纯 TTS 生成音频通常按 `source=生成`、`audio.generation=synthetic` 处理。
@@ -219,16 +234,17 @@ unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY
 
 数据集级常见字段：
 
-- 标准字段：`type`、`supported_tasks`、`source`、`source_info`、`environment`、`license`、`tag`、`info`。
+- 标准字段：`info`、`type`、`supported_tasks`、`source`、`source_info`、`environment`、`license`。当前训练数据集创建要求 `license` 必填且为字符串；`tag` 只在当前 CLI/schema 明确接受时写入。实际上传时以 CLI/schema 接受的字段为准。
 - 音频字段：`audio.tag`、`audio.generation`、`audio.acoustic.channels`、`audio.acoustic.sample_rate`、`audio.acoustic.device`、`audio.acoustic.distance`、`audio.acoustic.background`、`audio.acoustic.array_info`。
 - 语音字段：`audio.speech.language`、`audio.speech.dialect`、`audio.speech.anno_method`、`audio.speech.genre`、`audio.speech.style`。
 - 噪声字段：`audio.noise.style`。
-- 测试集业务扩展：`application_domain`、`category`、`project_name`、`product_info.brand`、`product_info.model`、`data_generate_time`、`data_user`、`test_content`、`wakeup_words`、`pms_id`、`test_date`、`voice_length_type`。
+- 测试集业务扩展：`application_domain`、`category`、`project_name`、`product_info.brand`、`product_info.model`、`data_user`、`test_content`、`wakeup_words`、`pms_id`、`test_date`、`voice_length_type`。这些字段只在当前 schema 明确接受时写入。
 
 样本级常见字段：
 
 - 必填底座：`sample_id`、`attribute.path`、`attribute.file_type`。
 - 高频标注：`annotation[].timestamp.begin_time`、`annotation[].timestamp.end_time`、`annotation[].transcription.language`、`annotation[].transcription.text`、`annotation[].transcription.keyword`、`annotation[].transcription.pronunciation`、`annotation[].transcription.pronunciation_unsigned`。
+- 常用补充：`annotation[].custom`、`annotation[].speaker.id`。
 - 默认不填：`parent_sample_id`、空对象、无来源依据的 `custom` 字段。
 
 常见数据来源枚举：
