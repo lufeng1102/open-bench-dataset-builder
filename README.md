@@ -42,6 +42,83 @@ claude
 gemini
 ```
 
+## 安装数据集系统 CLI
+
+上传、更新和发布 Open Bench 数据集依赖数据集系统 CLI。
+
+- PyPI 地址：https://pypi.org/project/aispeech-ds-cli/
+- 包名：`aispeech-ds-cli`
+- Python 要求：`>=3.9`
+
+```bash
+python3 -m pip install aispeech-ds-cli
+ds-cli --help
+```
+
+如果你的环境里 `python3 -m pip` 不可用，也可以按当前 Python 环境改用：
+
+```bash
+pip install aispeech-ds-cli
+```
+
+## 使用案例与常用 Query
+
+打开 AI 编程 CLI 后，建议直接用自然语言说明目标、原始目录、数据集名称、任务类型和期望动作。下面这些 Query 可以直接复制后替换占位符。
+
+**目录转标准数据集并上传**
+
+```text
+帮我把这个目录中的结构转成 dataset 标准结构，再上传到 Open Bench 的数据集系统中。
+原始目录：<RAW_DATA_DIR>
+数据集名称：<DATASET_NAME>
+任务类型：<WakeUp|ASR|FalseTrigger|其他>
+数据集类型：<物理训练集|物理测试集|逻辑数据集>
+输入文件说明：<例如 wav.scp + text + utt2spk，或每个子目录是一类样本>
+上传前请先校验 df/sf/ef 文件，遇到字段不确定或平台枚举阻塞时先停下来问我。
+```
+
+**只做本地转换，不上传**
+
+```text
+帮我把 <RAW_DATA_DIR> 转成 Open Bench dataset 标准目录结构，只做本地生成和校验，暂时不要上传。
+数据集名称：<DATASET_NAME>
+任务类型：<TASK_TYPE>
+请输出生成了哪些文件、校验结果，以及后续上传需要执行的 ds-cli 命令。
+```
+
+**检查已有数据集目录**
+
+```text
+请检查 <DATASET_DIR> 是否符合 Open Bench dataset 标准结构。
+重点检查 df.json/df.jsonl、sf.jsonl、ef.jsonl 或逻辑数据集索引是否齐全，字段是否有明显冲突。
+如果是测试集，请运行 scripts/validate_sf_jsonl.py。
+```
+
+**从常见语音清单生成测试集**
+
+```text
+这个目录里有 wav.scp、text、utt2spk、utt2domain 等文件。
+请先判断每列语义，再生成物理测试集需要的 df.json、df.jsonl 和 sf.jsonl。
+不要猜数据集名称和 source，拿不准的字段先问我。
+```
+
+**维护线上已有数据集**
+
+```text
+帮我维护 Open Bench 上已有的数据集 <DATASET_NAME>。
+请先用 ds-cli clone 拉取线上全量样本作为底本，再按我的要求修改标签/标注：
+<CHANGE_REQUEST>
+修改后走 ds-cli update、push、release，不要重建同名数据集。
+```
+
+**处理上传冲突**
+
+```text
+上传 <DATASET_DIR> 时遇到 sample_id 已注册或字段枚举错误。
+请帮我判断这是重复上传、样本 ID 需要重命名，还是平台枚举/白名单问题。
+不要直接批量改 ID，先给出判断依据和建议动作。
+```
+
 ## 为什么这个仓库有价值
 
 数据集工作最消耗人的，往往不是“会不会写命令”，而是：
