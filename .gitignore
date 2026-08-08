@@ -1,0 +1,9 @@
+datasets/*
+!datasets/README.md
+.omc/
+.DS_Store
+**/.DS_Store
+**/.ds_cache/
+.claude/
+.docs/imgs/iShot_*.png
+downloaded_docs/

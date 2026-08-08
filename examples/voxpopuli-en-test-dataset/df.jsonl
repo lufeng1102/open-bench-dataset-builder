@@ -1,0 +1,1 @@
+{"type":["audio"],"supported_tasks":["ASR"],"info":"VoxPopuli English test subset. 10 samples. Sourced from voxpopuli-en-test2.","audio":{"tag":["speech"],"acoustic":{"channels":1,"sample_rate":16000,"device":"hifi"},"speech":{"language":"en","anno_method":"other"},"generation":"record"},"source":"公开数据","license":"CC0","environment":"室内安静"}
