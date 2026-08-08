@@ -1,13 +1,11 @@
 <div align="center">
 
-<img src=".docs/imgs/favicon.png" alt="MLOps Dataset Agent Icon" width="96" />
-
-# MLOps Dataset Agent
+# Open Bench Dataset Builder
 
 **把 Open Bench (http://www.open-bench.org/home) 数据集管理这件麻烦事，做成一条能稳定复用的流水线。**
 
 ![Platform](https://img.shields.io/badge/Platform-Open%20Bench-blue)
-![Workflow](https://img.shields.io/badge/Workflow-Agent%20Driven-0a7ea4)
+![Workflow](https://img.shields.io/badge/Workflow-SKILL%20Driven-0a7ea4)
 ![Environment](https://img.shields.io/badge/Env-Portable-orange)
 ![Status](https://img.shields.io/badge/Status-Open%20Source%20Ready-brightgreen)
 
@@ -22,7 +20,7 @@
 - 把上传、更新、校验、发布流程跑稳
 - 把踩坑经验持续沉淀下来，避免团队反复交学费
 
-<strong><span style="color: red;">而这一切，原则上都不需要人手工一项项去做。人类真正要做的，通常只是把杂乱的原始数据集目录交给 agent，然后在 agent 自己干活的过程中做必要监督。</span></strong>
+<strong><span style="color: red;">而这一切，原则上都不需要人手工一项项去做。人类真正要做的，通常只是把杂乱的原始数据集目录交给 SKILL 驱动的 AI CLI，然后在执行过程中做必要监督。</span></strong>
 
 
 ## 快速使用
@@ -30,7 +28,7 @@
 先把仓库拉下来，进入目录，然后启动任意 AI 编程 CLI 即可，例如 `codex`、`claude`、`gemini`：
 
 ```bash
-cd mlops-dataset-agent
+cd open-bench-dataset-builder
 codex
 ```
 
@@ -56,20 +54,18 @@ gemini
 
 这个仓库的目标很直接：
 
-**让人只需要说清楚任务，让 agent 负责把规范、制作、上传和经验回写串成闭环。**
+**让人只需要说清楚任务，让 SKILL 负责把规范、制作、上传和经验回写串成闭环。**
 
 ## 这个仓库里有什么
 
 - **`SKILL.md`**
-  面向 agent 的主技能说明，负责数据集类型判断、字段规则、上传流程和冲突处理。
+  面向 AI CLI 的主技能说明，负责数据集类型判断、字段规则、上传流程和冲突处理。
 - **`references/`**
   结构化字段规范、ds-cli 操作手册和通用排障经验。
 - **`scripts/`**
   可复用的公共脚本放这里，例如 `sf.jsonl` 的统一校验脚本、附加文件的批量发布与软链替换脚本。
 - **`examples/`**
   可公开的最小示例数据集，用来展示 `df.jsonl/sf.jsonl/ef.jsonl` 组织方式。
-- **`.codex/agents/`**
-  项目级子代理配置。适合把“主代理判边界、子代理做单项执行”这类分工沉淀为可复用角色。
 - **`references/TroubleShooting.md`**
   踩坑记录、经验总结和后续可复用结论。
 
@@ -99,7 +95,7 @@ gemini
 
 ## 最推荐的使用方式
 
-如果你希望 agent 一次把事情接稳，直接把这些信息说清楚：
+如果你希望 SKILL 一次把事情接稳，直接把这些信息说清楚：
 
 - 原始数据目录在哪里
 - 任务类型是什么，例如 `WakeUp`、`ASR`
@@ -109,7 +105,7 @@ gemini
 - 输入文件格式是什么，以及每列的语义
 - 是否有要忽略的子目录或特殊处理要求
 
-你给的信息越完整，agent 越容易把这条链路一次跑通：
+你给的信息越完整，SKILL 越容易把这条链路一次跑通：
 
 **制作 -> 校验 -> 上传/更新 -> 经验回写**
 
@@ -122,14 +118,14 @@ gemini
   - 负责解释仓库目标、目录结构和推荐工作方式
   - 只保留少量必须知道的关键规则
 - `SKILL.md`
-  - 给 agent 看
+  - 给 AI CLI 看
   - 负责具体执行约束、字段规则、命令前置动作和冲突处理
   - 作为当前项目内更权威的操作约束
 - `references/TroubleShooting.md`
   - 负责沉淀实操踩坑、边界案例和经过验证的处理方式
 
 如果你只想快速理解这个仓库，看 `README.md`。
-如果你要判断 agent 具体应该怎么做，以 `SKILL.md` 为准。
+如果你要判断 SKILL 具体应该怎么做，以 `SKILL.md` 为准。
 
 ## 当前必须知道的最小规则
 
@@ -147,32 +143,9 @@ gemini
 - 线上已有数据集要改标签或标注时，不要重建数据集：先 `ds-cli clone` 拿线上全量样本作底本，再走 `ds-cli update` → `ds-cli push` → `ds-cli release`。
 - 每次成功上传一个新数据集后，都应把可公开复用的经验回写到 `SKILL.md` 或 `references/TroubleShooting.md`。
 
-## 当前项目里的子代理
+## 当前项目里的 SKILL 配置
 
-当前仓库已经沉淀了一个项目级子代理：
-
-- `物理测试集管理器 / Physical Testset Manager`
-  - 配置文件：`.codex/agents/physical-testset-manager.toml`
-  - 模型：`gpt-5.4-mini`
-  - reasoning：`high`
-
-它的职责不是自己探索一个项目，而是消费主代理已经确认好的“单个物理测试集任务”，然后完成：
-
-- 判断该任务属于 `WakeUp`、`ASR` 或 `FalseTrigger`
-- 按完整交付风格制作一套测试集目录：
-  - `original_dataset/`
-  - `AGENTS.md`
-  - `df.json`
-  - `df.jsonl`
-  - `make_sf_jsonl.py`
-  - `sf.jsonl`
-- 调用 `ds-cli` 尝试上传
-- 若遇到平台枚举或白名单阻塞，只返回阻塞项，不擅自改业务字段
-
-这套模式适合批量上传时的分工：
-
-- 主代理负责拆边界、问用户、定字段
-- 子代理负责单测试集执行
+当前仓库的执行约束集中维护在 `SKILL.md` 中。它负责定义数据集类型判断、字段规则、命令前置动作、校验要求和冲突处理方式。
 
 更细的字段约束、样本级规则和命令执行要求，统一放在 `SKILL.md` 中维护，不在 README 继续展开复制。
 
@@ -190,7 +163,7 @@ gemini
 当你要新建、制作或上传一个数据集时，最稳的节奏是：
 
 1. 先确认数据集名称、任务类型、数据集类型和输入文件格式。
-2. 再选择对应的 builder 或 porter skill。
+2. 再选择对应的 builder 或 porter SKILL。
 3. 先制作 `df.jsonl / sf.jsonl / ef.jsonl`，或逻辑数据集目录 / JSONL 索引。
 4. 对测试集，先跑公共校验脚本确认 `sf.jsonl` 没有互斥字段错误。
 5. 再执行创建、上传、更新和推送。
@@ -215,12 +188,12 @@ gemini
 ## 大家怎么评价
 
 <blockquote>
-  <p><strong><em>"以前最怕的是规范记不住、字段填错、命令跑挂。现在把原始目录和要求说清楚，agent 基本能把制作、上传、校验一路接住，省掉很多来回确认。"</em></strong></p>
+  <p><strong><em>"以前最怕的是规范记不住、字段填错、命令跑挂。现在把原始目录和要求说清楚，SKILL 基本能把制作、上传、校验一路接住，省掉很多来回确认。"</em></strong></p>
 </blockquote>
 <div align="right"><em>—— 数据工程同学</em></div>
 
 <blockquote>
-  <p><strong><em>"这个仓库最有价值的不是某一个脚本，而是把规范、skill、踩坑经验和上传流程都串起来了。新人接手的时候，不用再靠口口相传。"</em></strong></p>
+  <p><strong><em>"这个仓库最有价值的不是某一个脚本，而是把规范、SKILL、踩坑经验和上传流程都串起来了。新人接手的时候，不用再靠口口相传。"</em></strong></p>
 </blockquote>
 <div align="right"><em>—— 平台维护同学</em></div>
 
