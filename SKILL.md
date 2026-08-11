@@ -39,14 +39,14 @@ description: 制作、校验、整理和上传 Open Bench 数据集产物，覆�
 ### 物理测试集
 
 - 产物通常是 `df.json`、`df.jsonl`、`sf.jsonl`，需要时再加 `ef.jsonl`。
-- 首次创建用 `ds-cli create ... --test`。
+- 首次创建用 `ds-cli create -n <name> -df df.jsonl -sf sf.jsonl`，有附加文件再加 `-ef ef.jsonl`；不要额外添加物理类型或测试集标记参数。
 - 先读通用测试集规范，再读任务专属规范。
 - `test_content`、`wakeup_words`、`product_info` 等测试集字段只在确有语义时填写。
 
 ### 物理训练集
 
 - 产物通常是 `df.jsonl`、`sf.jsonl`、`ef.jsonl`。
-- 首次创建用 `ds-cli create`，不要加 `--test`。
+- 首次创建用 `ds-cli create`，不要额外添加测试集标记参数。
 - 不使用测试集专属字段，例如 `test_content`、`wakeup_words`、`product_line`。
 - 噪声/RIR 数据走 `audio.noise`，无转录样本不要强造 `annotation`。
 
@@ -129,7 +129,7 @@ description: 制作、校验、整理和上传 Open Bench 数据集产物，覆�
 
 ### 基本流程
 
-1. 确认目标是物理训练集，不加 `--test`。
+1. 确认目标是物理训练集，不额外添加测试集标记参数。
 2. 确认数据集名、任务类型、输入文件格式和列语义。
 3. 生成 `df.jsonl`、`sf.jsonl`，确有附加文件时生成非空 `ef.jsonl`。
 4. 检查 JSON 行格式、`sample_id` 唯一、路径可达、必填字段完整。
@@ -185,7 +185,7 @@ unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY
 ### 物理测试集上传
 
 1. 确认目录中有 `df.json`、`df.jsonl`、`make_sf_jsonl.py`、`sf.jsonl`。
-2. 首次创建用 `ds-cli create ... --test`。
+2. 首次创建用 `ds-cli create -n <name> -df df.jsonl -sf sf.jsonl`，有附加文件再加 `-ef ef.jsonl`。
 3. 创建成功后保留自动生成的 `_phy_*` 目录。
 4. 后续修改进入 `_phy_*` 目录执行 `ds-cli add/update/rm`。
 5. 修改后执行 `ds-cli push`。
@@ -193,7 +193,7 @@ unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY
 
 ### 物理训练集上传
 
-1. 首次上传用 `ds-cli create`，不要加 `--test`。
+1. 首次上传用 `ds-cli create`，不要额外添加测试集标记参数。
 2. 创建成功通常会自动完成首次推送。
 3. 后续增量用 `ds-cli add`，定向修改用 `ds-cli update`，删除用 `ds-cli rm`。
 4. `add/update/rm` 后必须执行 `ds-cli push`。

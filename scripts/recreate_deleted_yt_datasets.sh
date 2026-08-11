@@ -36,7 +36,7 @@ for dataset_name in "${DATASETS[@]}"; do
   if (
     cd "$dataset_dir"
     unset HTTP_PROXY HTTPS_PROXY http_proxy https_proxy ALL_PROXY
-    ds-cli create -t phy -df df.jsonl -sf sf.jsonl -n "$dataset_name" --test
+    ds-cli create -df df.jsonl -sf sf.jsonl -n "$dataset_name"
   ) >"$tmp_log" 2>&1; then
     dataset_id="$(grep -Eo 'ds[0-9A-Z]+' "$tmp_log" | tail -n1 || true)"
     message="$(tail -n 1 "$tmp_log" | tr '\t' ' ' | tr '\n' ' ' | sed 's/[[:space:]]\+/ /g')"
